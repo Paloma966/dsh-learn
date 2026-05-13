@@ -1,0 +1,8 @@
+{
+  "name": "ai-learning-skill",
+  "version": "1.0.0",
+  "description": "AI-driven learning: turn any codebase into a progressive coding exercise",
+  "author": "chun",
+  "license": "MIT",
+  "skills": ["./skills/ai-learning"]
+}

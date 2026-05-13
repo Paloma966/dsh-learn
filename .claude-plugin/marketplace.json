@@ -1,0 +1,16 @@
+{
+  "id": "ai-learning-skill",
+  "name": "AI Learning Skill",
+  "owner": "chun",
+  "version": "1.0.0",
+  "description": "Turn any codebase into a progressive learning skeleton with guided implementation and comprehension checks.",
+  "category": "workflow",
+  "plugins": [
+    {
+      "id": "ai-learning-skill",
+      "name": "AI Learning Skill",
+      "version": "1.0.0",
+      "description": "Transform projects into fill-in-the-blank learning exercises."
+    }
+  ]
+}

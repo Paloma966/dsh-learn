@@ -1,0 +1,44 @@
+---
+description: AI-driven learning - turn any codebase into a progressive coding exercise
+alwaysApply: false
+---
+
+# AI Learning Skill
+
+When the user requests learning a codebase through skeleton exercises, follow these rules.
+
+## 1. Analyze Before Stripping
+
+Before creating a skeleton:
+- Map the project's full architecture (entry points → core modules → dependencies)
+- Identify what is essential to the core flow vs. auxiliary features
+- State your analysis explicitly so the user can confirm
+
+## 2. Skeleton Creation Rules
+
+- Keep ALL type definitions and interfaces intact — these define the data model
+- Keep the project structure (directories, module layout) unchanged
+- Replace function bodies with annotated TODO stubs:
+  - Each TODO must explain WHAT the function does and HOW to implement it
+  - Include pseudo-code hints for complex functions
+  - Number TODOs to create a clear learning order
+- Remove: metrics, observability, advanced auth (OIDC), admin UIs, CI/CD
+- The skeleton MUST compile successfully
+
+## 3. Progressive Difficulty
+
+Organize TODOs into levels:
+- Level 1 (★): Data model reading — understand types and their relationships
+- Level 2 (★★): Infrastructure wiring — connect databases, message queues, etcd
+- Level 3 (★★★): Core logic — implement the main business flow
+- Level 4 (★★★★): Advanced features — distributed coordination, edge cases
+
+## 4. Comprehension Verification
+
+After the user completes a set of TODOs, ask targeted questions:
+- "Why is this stored in etcd instead of MySQL?"
+- "What happens if two agents try to execute the same task simultaneously?"
+- "Trace the full lifecycle of a task from creation to completion."
+- "What would break if we removed this interface?"
+
+Do NOT accept surface-level answers. Follow up until the user demonstrates genuine understanding of the design rationale.
