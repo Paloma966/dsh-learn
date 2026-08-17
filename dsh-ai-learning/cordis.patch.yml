@@ -1,0 +1,4 @@
+# ai-learning bundle layer: mounts the state-tracked learning engine.
+- insert:
+    - id: ai-learning
+      name: dsh-ai-learning
