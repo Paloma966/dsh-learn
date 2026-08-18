@@ -10,10 +10,11 @@
 
 1. Open the project you want to learn in Cursor
 2. In Composer or Chat, say: "I want to learn this project, create a learning skeleton"
-3. Cursor will apply the AI Learning guidelines and follow the 4-phase process
+3. Cursor will apply the AI Learning guidelines and follow the milestone-based process
 
 ## Maintenance
 
-- Keep `.cursor/rules/ai-learning.mdc` in sync with `skills/ai-learning/SKILL.md`
+- The canonical methodology lives in `dsh-ai-learning/assets/skills/ai-learning/SKILL.md` (the engine-bundled skill)
+- Keep `.cursor/rules/ai-learning.mdc` in sync with `skills/ai-learning/SKILL.md` and `CLAUDE.md`
 - The `.mdc` file is a condensed version optimized for Cursor's context window
-- When updating the skill, update both files
+- When updating the skill, update all copies

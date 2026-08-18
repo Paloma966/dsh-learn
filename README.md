@@ -2,6 +2,8 @@
 
 > Turn any codebase into a learn-by-doing exercise. Skeleton, implement, verify.
 
+Runs in three hosts: **Claude Code**, **Cursor**, and **DeepSeek Harness**. The Claude Code and Cursor skills carry the methodology as instructions; `dsh-ai-learning/` carries it as a native, enforced engine (state machine + verification gates + state persistence).
+
 ## The Problem
 
 Reading source code is passive. You read 10,000 lines, nod along, then realize you can't explain how the system actually works. Real understanding comes from **building** — but jumping into a production codebase is overwhelming. Where do you start?
@@ -64,7 +66,27 @@ After each milestone, the AI asks questions that test **understanding**, not mem
 
 Surface-level answers get follow-up questions. The goal is for you to explain not just **what** the code does, but **why** it was designed that way.
 
+## DeepSeek Harness Engine
+
+`dsh-ai-learning/` is the native DeepSeek Harness implementation of the same methodology — the canonical source of truth for the instruction set. The Claude Code and Cursor skills above mirror it.
+
+- **State machine** — the exercise advances `analyzing → skeletonizing → learning → complete` (forward only). Milestones verify only when their gate is green and every Socratic question passes.
+- **`/learn` commands** — `/learn new <origin-path>`, `/learn status`, `/learn check [milestone]` drive the exercise from the chat surface.
+- **3 model tools** — `ai_learning_status`, `ai_learning_next`, and `ai_learning_update` give the model a validated way to create todos and milestones, advance phases, ask questions, give hints, and grade answers.
+- **Verification gate** — each milestone's build command must actually run and pass before the milestone can verify. The default gate is Go-only (`go build ./...`); other languages must be added in the `gates` config.
+- **State persistence** — progress lives in `<cwd>/.ai-learning/state.json`, so it survives session boundaries and illegal shortcuts are rejected.
+
+See [`dsh-ai-learning/README.md`](dsh-ai-learning/README.md) for configuration, the state-file schema, and known limitations.
+
 ## Installation
+
+### As a DeepSeek Harness Plugin
+
+```sh
+dsh plugin --profile <name> add dsh-ai-learning
+```
+
+See [DeepSeek Harness Engine](#deepseek-harness-engine) above for what the plugin enforces.
 
 ### As a Claude Code Plugin
 

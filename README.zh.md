@@ -2,6 +2,8 @@
 
 > 把任何代码仓库变成渐进式编程练习。骨架 → 实现 → 验证理解。
 
+支持三种宿主：**Claude Code**、**Cursor** 与 **DeepSeek Harness**。Claude Code 与 Cursor 的 skill 以指令形式承载这套教学法；`dsh-ai-learning/` 以原生、强制执行的引擎承载它（状态机 + 验证门 + 状态持久化）。
+
 ## 问题
 
 读源码是被动的。你读了一万行代码，频频点头，然后发现自己根本解释不了系统是怎么运作的。真正的理解来自**动手构建**——但直接跳进一个生产级代码仓库又太劝退了。从哪开始？
@@ -65,7 +67,27 @@ TODO 按依赖关系排序，不是按文件排：
 
 答得太浅会被追问。目标是你能解释代码不只是**做了什么**，而是**为什么这样设计**。
 
+## DeepSeek Harness 引擎
+
+`dsh-ai-learning/` 是同一套教学法的 DeepSeek Harness 原生实现——也是指令集的权威来源，上面的 Claude Code 与 Cursor skill 都镜像它。
+
+- **状态机** —— 练习按 `analyzing → skeletonizing → learning → complete` 前进（只进不退）。里程碑只有在验证门通过、且所有苏格拉底问题都答对时才会被标记为已验证。
+- **`/learn` 命令** —— `/learn new <origin-path>`、`/learn status`、`/learn check [milestone]` 在对话界面驱动练习。
+- **3 个模型工具** —— `ai_learning_status`、`ai_learning_next`、`ai_learning_update` 让模型以受校验的方式创建 TODO 与里程碑、推进阶段、提问、给提示、评分。
+- **验证门** —— 每个里程碑的构建命令必须真正跑通，里程碑才能被验证。默认 gate 仅覆盖 Go（`go build ./...`）；其他语言需在 `gates` 配置里添加。
+- **状态持久化** —— 进度保存在 `<cwd>/.ai-learning/state.json`，跨会话不丢失，非法捷径被直接拒绝。
+
+详见 [`dsh-ai-learning/README.md`](dsh-ai-learning/README.md) 的配置、状态文件结构与已知局限。
+
 ## 安装
+
+### 作为 DeepSeek Harness 插件
+
+```sh
+dsh plugin --profile <name> add dsh-ai-learning
+```
+
+插件强制执行的内容见上文的「DeepSeek Harness 引擎」一节。
 
 ### 作为 Claude Code 插件
 

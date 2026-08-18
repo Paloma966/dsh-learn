@@ -1,151 +1,140 @@
 ---
 name: ai-learning-skill
-description: Turn any codebase into a progressive learning skeleton. Analyze project architecture, strip non-essentials, create numbered TODO stubs with implementation hints, and verify understanding through Socratic questioning after each completion milestone.
+description: Turn any codebase into a progressive, learn-by-doing exercise: analyze the architecture, create a compiling skeleton with annotated TODO stubs, track milestones and verification gates, and verify comprehension with graded Socratic questions. Use when the user wants to learn or study a codebase, asks for a learning skeleton or simplified version, or wants a tutorial-style progressive exercise for an existing project.
 ---
 
 # AI Learning Skill
 
-Transform a production codebase into a learn-by-doing exercise. The AI analyzes the project, strips away non-core features, leaves a compiling skeleton with annotated TODO stubs, then questions the learner to verify genuine understanding — not surface-level memorization.
+Transform a production codebase into a learn-by-doing exercise. You (the AI) do the analysis and the teaching. On DeepSeek Harness the bundled `dsh-ai-learning` plugin enforces the process (state machine, verification gates, progress injection); on Claude Code and Cursor there is no enforcement plugin, so you must enforce the same discipline yourself — track milestones explicitly, run the gate before verifying, and grade answers honestly.
 
-## When to Use
+## Division of labor
 
-Trigger when the user says any of:
-- "I want to learn this project" / "help me understand this codebase"
-- "create a learning skeleton" / "make a simplified version for learning"
-- "turn this into a tutorial" / "progressive learning exercise"
-- References an existing project and wants to study it
+| Enforced by the host | Performed by you |
+|---|---|
+| State tracking and lifecycle (the DSH plugin) | Architecture analysis and scope negotiation |
+| Milestone status machine — no skipping, no unverified completion | Skeleton creation and TODO authoring |
+| Real verification gates | Socratic questioning and grading |
+| Progress tracking | Teaching judgment and hint escalation |
 
-## The Process
+On Claude Code / Cursor, substitute your own discipline for the "enforced by the host" column: keep an explicit milestone list, run the project's build before each milestone is verified, and record pass/fail.
 
-### Phase 1: Architecture Analysis
+## The workflow
 
-Read the full project structure. Identify:
+The exercise starts when the learner asks to learn a project (`/learn new <origin-path> ...` on DeepSeek Harness, or a plain request on Claude Code / Cursor). Your phases:
 
-1. **Entry points** — How does the system start? (main.go, command handlers)
-2. **Core data flow** — What is the primary data path through the system?
-3. **External dependencies** — What does it connect to? (databases, message queues, RPC)
-4. **Supporting features** — What is auxiliary? (metrics, admin UI, advanced auth)
+### Phase 1 — Analyzing
 
-State your analysis to the user before proceeding. Example:
+1. Read the full project structure. Map **entry points → core data flow → dependencies → auxiliary features**.
+2. State your analysis to the learner before doing anything. If core vs. auxiliary is ambiguous, present interpretations and ask. A `--module` scope limits the study to one subsystem.
+3. Record the domain model as todos, grouped by dependency, not by file.
 
-> This is a distributed X system. Center manages metadata in etcd, Agents execute work items on a cron schedule, communication is via gRPC. Core flow: Create item → Store in etcd → Agent picks up → Execute → Report result. I'll keep the task lifecycle, strip workflow/webhook/admin features.
+### Phase 2 — Skeletonizing
 
-### Phase 2: Skeleton Creation
-
-Create a new directory `<project>-simple` alongside the original. Follow these rules:
+Create `<origin>-simple` alongside the original. **Never modify the original project.**
 
 **Keep intact (no changes):**
-- All type definitions (structs, interfaces, constants) — these define the domain model
+- ALL type definitions, interfaces, constants — they define the domain model
 - Auto-generated code (protobuf, etc.)
 - Project directory structure and module layout
-- Configuration file skeletons (with realistic defaults)
-- Database schema files (table definitions)
+- Configuration file templates with realistic defaults — **strip secrets** (tokens, passwords, real endpoints) before copying
+- Database schema files
 
 **Strip entirely:**
 - Metrics, observability, alerting
 - Advanced authentication (OIDC, SSO)
-- Admin/management UIs
-- CI/CD configuration
+- Admin/management UIs, CI/CD configuration
 - Workflow orchestration, webhooks (unless core to the project)
 - Temporary/scheduled tasks (unless core)
 - Third-party integrations (unless core)
 
-**Replace with annotated TODOs:**
-- Every function body that implements business logic
-- Every database query method
-- Every gRPC/RPC handler
-- Every scheduling/matching algorithm
-
-**TODO annotation format:**
+**Replace with annotated TODO stubs.** Every removed implementation becomes one stub; annotate it in the code:
 
 ```go
-// SaveTask persists a task to etcd.
+// SaveTask persists a task to etcd. Called when the user creates or updates
+// a task through the Center API.
 //
-// TODO 3: Implement
-//   1. JSON-marshal the TaskInfo
-//   2. Write to etcd with key = common.BuildKey(projectID, taskID)
-//   3. Return the serialized task
-//   Hint: Use clientv3.WithLease() for automatic cleanup
-func (a *app) SaveTask(task *common.TaskInfo) (*common.TaskInfo, error) {
-    return nil, fmt.Errorf("TODO: SaveTask not implemented")
+// TODO t3 (★★): Implement task persistence
+//   1. JSON-marshal the TaskInfo struct
+//   2. Build the etcd key: common.BuildKey(task.ProjectID, task.TaskID)
+//   3. Write with clientv3.WithLease() so the key auto-expires on crash
+//   Hint: a.etcd.KV().Put(ctx, key, value, clientv3.WithLease(leaseID))
+//   Trap: without a lease, dead tasks accumulate forever
+func (a *app) SaveTask(task *common.TaskInfo, opts ...clientv3.OpOption) (*common.TaskInfo, error) {
+    return nil, fmt.Errorf("TODO t3: SaveTask not implemented")
 }
 ```
 
-Each TODO must include:
-- **Number** — establishes learning order
-- **What** — one-line description of the method's purpose
-- **Steps** — numbered implementation hints
-- **Hint** (optional) — traps to avoid, design rationale, relevant Go/library features
-- **Difficulty** (optional) — ★ to ★★★★
+Precedence when the rules conflict (kept types consumed by stripped code, etc.): **keep the type, stub the consumer at its outermost entry point**; a stub that only returns an error must still compile with no unused imports and no dead code. The skeleton must compile — verify with the shell tool (`go build ./...` for Go) before advancing.
 
-**Order TODOs by dependency:**
-1. Data model reading (understand types first)
-2. Infrastructure wiring (connect to databases, etcd)
-3. Basic CRUD (read/write operations)
-4. Core business logic (the main flow)
-5. Advanced features (distributed coordination, edge cases)
+**Difficulty rubric (the ★ ratings):**
 
-**Verification gate:** The skeleton MUST compile (`go build ./...` passes, no unused imports).
+| ★ | What it means | Example |
+|---|---|---|
+| ★ | Read and understand existing structure | Explain how `TaskInfo` fields drive scheduling |
+| ★★ | Local implementation in one module; compile gate | Implement `SaveTask` as annotated |
+| ★★★ | Cross-module data flow; wiring several components | Implement the agent's watch → schedule → execute loop |
+| ★★★★ | Distributed coordination, races, failure handling | Lease-based locking, crash recovery, double-execution prevention |
 
-### Phase 3: Create the Learning Guide
+### Phase 3 — Defining milestones and questions
 
-Generate a `CLAUDE.md` or `LEARNING.md` in the skeleton directory containing:
+Group todos into **milestones by dependency order**. A good ladder:
 
-- Architecture diagram (ASCII art)
-- Directory overview table with completion status
-- Learning roadmap (which TODOs to tackle in which order)
-- Full TODO index with numbers, files, methods, and difficulty ratings
-- Running instructions
+1. Data model reading (★★) — understand types and relationships first
+2. Infrastructure wiring (★★) — connect databases, etcd, message queues
+3. Core business logic (★★★) — the main flow
+4. Advanced features (★★★★) — distributed coordination, failure handling
 
-### Phase 4: Comprehension Verification (Socratic Follow-up)
+Each milestone carries:
+- `gate`: command that must succeed (defaults to the language gate, e.g. `go build ./...`; override per milestone when a stronger check fits)
+- `questions`: Socratic items with `ask`, `expected` (grading key — see Phase 5), and `hints` (escalation ladder, weakest first)
 
-This is the most important phase. After the user completes a milestone (a group of related TODOs), do NOT just say "good job." Ask probing questions:
+### Phase 4 — Learning
 
-**For infrastructure questions:**
-- "Why is this data stored in X instead of Y? What would break if we swapped?"
-- "What happens if the connection to X fails? Is there a fallback?"
+Guide the learner through the current milestone's todos, updating todo statuses as they progress. When they claim completion:
 
-**For design questions:**
-- "Why is this an interface instead of a concrete type?"
-- "What problem does this abstraction solve? Could we remove it?"
+1. **Review their code against the original implementation.** The origin project is the answer key — consult it to grade, never copy answers into the conversation.
+2. Run the gate. A failed gate marks the milestone failed and records the error; guide the fix, then re-check.
 
-**For distributed systems:**
-- "Trace the full lifecycle of a task from creation to completion. Where are the failure points?"
-- "If two agents pick up the same task simultaneously, what prevents double execution?"
+### Phase 5 — Socratic verification (the most important phase)
 
-**For Go-specific questions:**
-- "Why is this channel buffered to 3000? What happens if it fills up?"
-- "Why use sync.Map here instead of a regular map with a mutex?"
+After a green gate, ask the milestone's questions **one at a time**:
 
-**Questioning rules:**
-- Don't accept one-sentence answers. Follow up: "What specifically would break? Walk me through the scenario."
-- If the user gives a surface-level answer, push deeper: "You said X prevents Y — but under what condition would X fail?"
-- If the user is stuck, give hints, not answers: "Think about what happens to the lease when the agent crashes."
-- Link back to earlier concepts: "Remember when we talked about the etcd Watch mechanism — how does that apply here?"
+- Start with WHY questions about design decisions, then trace failure scenarios, then link across modules.
+- Grade each answer against the question's `expected` points. **Never reveal `expected` verbatim** — it is the grading key, not the lesson.
+- A weak answer gets one hint at a time: escalate the ladder before revealing anything. Hints exhausted → reveal the answer and have the learner **explain it back**, then grade that.
+- Grade honestly: surface answers fail. A failed question means targeted rework, then re-ask. Stuck learners get hints, not answers — connect to concepts they already understand.
+- A milestone verifies only when its gate is green AND every question passed. The workflow completes when every milestone verifies.
 
-## Example Interaction
+The measure of success: the learner can explain not just WHAT the code does, but WHY it was designed that way and WHAT tradeoffs were made.
 
-```
-User: I finished TODO 3-7 (etcd CRUD operations). Can you check?
+## Language gates
 
-AI: Let me review. [reads code]
+Go is the default (`go build ./...`). On DeepSeek Harness other languages come from the plugin configuration (`gates` in the profile's patch layer). On Claude Code / Cursor, just run the project's own build/test command and treat it as the gate:
 
-Good, the basic CRUD looks correct. Now, a few questions:
+| Language | Typical gate |
+|---|---|
+| Go | `go build ./...` |
+| Rust | `cargo check` |
+| TypeScript | `pnpm typecheck` |
 
-1. In GetTask, you used a simple KV.Get. What happens if two Centers 
-   try to update the same task simultaneously? Is there a race condition?
+Pick the gate at start time and apply it consistently to every milestone.
 
-2. Your DeleteTask just removes the key. But what if an Agent is 
-   currently executing that task? Walk me through what would happen.
+## Safety rules (hard)
 
-3. Why do you think the original code stores tasks in etcd instead of 
-   MySQL? What property of etcd makes it suitable for this?
-```
+1. Never modify the original project — the skeleton is a separate directory.
+2. Config templates ship without secrets; scan copied files for tokens, passwords, and real endpoints.
+3. Respect the original project's license when copying generated code or schemas.
+4. Keep grading keys (`expected` answer points) out of what you show the learner.
 
-## Important Defaults
+## Anti-patterns
 
-- The skeleton directory name is `<original-project>-simple`
-- Place it alongside the original project
-- Always `go mod tidy && go build ./...` to verify compilation
-- If the original project has a `CLAUDE.md`, preserve its behavioral guidelines in the skeleton
-- Prefer keeping something as-is over stripping it when uncertain — the user can always ignore it
+| Anti-pattern | Why it fails |
+|---|---|
+| Deleting type definitions | The learner cannot understand the domain model |
+| Blank TODO stubs | No guidance on what or how to implement |
+| No dependency ordering | Distributed locking before basic CRUD |
+| Claiming verification without a gate run | Fake progress; the learner never confronts their build |
+| Revealing answers instead of hinting | Short-circuits the learning loop |
+| Over-stripping | Loses the context that makes the architecture legible |
+
+See `EXAMPLES.md` for a worked example through all phases.

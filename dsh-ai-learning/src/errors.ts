@@ -9,8 +9,6 @@
 export type LearningErrorCode =
   /** A state file already exists where create requires absence. */
   | 'STATE_EXISTS'
-  /** No state file exists for this cwd. */
-  | 'STATE_NOT_FOUND'
   /** The state file exists but does not parse or fails validation. */
   | 'STATE_INVALID'
   /** The requested transition violates the state machine. */

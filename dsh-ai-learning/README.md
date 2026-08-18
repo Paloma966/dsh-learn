@@ -48,6 +48,8 @@ All fields are optional; the defaults follow Go-first.
 | `gates` | `{ go: { build: [go, build, ./...] } }` | Per-language verification gates, keyed by the language chosen at create time |
 | `maxCapturedOutput` | `8000` | Captured characters per gate output stream |
 
+The default `gates` table covers **Go only** — choosing any other language at `/learn new` time fails with `GATE_UNKNOWN` until you add that language to `gates`.
+
 Set them in the profile's patch layer:
 
 ```yaml
@@ -106,7 +108,7 @@ Append-only injections at the pre-step boundary; a card appears only after a sta
 
 ## Known Limitations and Deferred Work
 
-- **Structural host contracts.** The published `@deepseek-ai/dsh-*` rc.1 tree references unpublished packages, so this bundle cannot install dsh packages; the host surfaces (`ctx.fs`, `ctx.commands`, `ctx.tools`, `ctx.skills`, `ctx.shell`, `agent/pre-step`) are consumed through locally declared structural interfaces. Revisit when the dsh packages publish a coherent dependency tree.
+- **Structural host contracts.** The published `@deepseek-ai/dsh-*` rc.1 tree references unpublished packages, so this bundle cannot install dsh packages; the host surfaces (`ctx.fs`, `ctx.commands`, `ctx.tools`, `ctx.skills`, `ctx.shell`, `agent/pre-step`) are consumed through locally declared structural interfaces in `src/host-types.ts` and `src/fs-types.ts`. These hand-written interfaces must be updated by hand whenever the host contract changes — a maintenance burden that is not being refactored away yet. Revisit when the dsh packages publish a coherent dependency tree.
 - **Grading keys are in the workspace.** `expected` answer points ride in the state file (and `ai_learning_next`), so a determined learner can read them — the same honor-system leak as the original project sitting next door; the skill instructs the model never to reveal them verbatim.
 - **Commands need a command adapter.** `/learn new|status|check` register only in interactive compositions; headless/ACP flows use `ai_learning_update` `create` / `check_gate` instead.
 - **Tool calls need a session cwd.** Tools reject when the execution has no agent attached.

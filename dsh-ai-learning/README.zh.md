@@ -48,6 +48,8 @@ git 安装拉取的是源码：pnpm 会执行包的 `prepare` 脚本（构建）
 | `gates` | `{ go: { build: [go, build, ./...] } }` | 按语言索引的验证门，语言在创建时选定 |
 | `maxCapturedOutput` | `8000` | 每条 gate 输出流最多保留的字符数 |
 
+默认 `gates` 表**只覆盖 Go** —— 在 `/learn new` 时选择任何其他语言都会报 `GATE_UNKNOWN`，直到你在 `gates` 里加入该语言。
+
 在 profile 的补丁层覆盖：
 
 ```yaml
@@ -106,7 +108,7 @@ pnpm build       # tsdown → lib/index.js，tsc → lib/types/
 
 ## Known Limitations and Deferred Work
 
-- **宿主契约以结构化接口消费。** 已发布的 `@deepseek-ai/dsh-*` rc.1 依赖树引用了未发布的包，本 bundle 无法安装 dsh 包；`ctx.fs`、`ctx.commands`、`ctx.tools`、`ctx.skills`、`ctx.shell`、`agent/pre-step` 均通过本地声明的结构化接口对接。待 dsh 包发布完整依赖树后回访。
+- **宿主契约以结构化接口消费。** 已发布的 `@deepseek-ai/dsh-*` rc.1 依赖树引用了未发布的包，本 bundle 无法安装 dsh 包；`ctx.fs`、`ctx.commands`、`ctx.tools`、`ctx.skills`、`ctx.shell`、`agent/pre-step` 均通过 `src/host-types.ts` 与 `src/fs-types.ts` 中本地声明的结构化接口对接。这些手写接口在宿主契约变化时需手工同步——这是暂未重构的维护负担。待 dsh 包发布完整依赖树后回访。
 - **评分要点在工作区中。** `expected` 答案要点随状态文件存储（`ai_learning_next` 可见），执着的学习者可以读到——与原项目就在隔壁属于同一性质的荣誉制泄露；skill 明确要求模型绝不原样展示要点。
 - **命令需要命令适配器。** `/learn new|status|check` 仅在交互式组合中注册；headless/ACP 流程改用 `ai_learning_update` 的 `create` / `check_gate`。
 - **工具调用需要会话 cwd。** 执行体未挂 agent 时工具直接拒绝。

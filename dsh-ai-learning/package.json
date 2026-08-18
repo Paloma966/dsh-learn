@@ -1,6 +1,6 @@
 {
   "name": "dsh-ai-learning",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Turn any codebase into a progressive learn-by-doing exercise: state-tracked milestones, verification gates, and Socratic follow-ups for DeepSeek Harness.",
   "author": "chun",
   "license": "MIT",
